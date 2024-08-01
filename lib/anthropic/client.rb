@@ -30,15 +30,16 @@ module Anthropic
           # handle successful response
           return response if response.dig("content", 0, "text").present?
 
-          # handle max attempts
-          if attempts > max_attempts
-            raise Anthropic::Error,
-                  "Failed after #{max_attempts} attempts. #{error_message}"
-          end
-
           # handle error response
           error_type = response.dig("error", "type")
           error_message = response.dig("error", "message")
+
+          # handle max attempts
+          if attempts > max_attempts
+            raise Anthropic::Error,
+                  "Failed after #{max_attempts} attempts. Last error #{error_type}, #{error_message}"
+          end
+
           if %w[overloaded_error api_error rate_limit_error].include?(error_type) # rubocop:disable Style/GuardClause
             # retry loop with exponential backoff
             sleep(1 * attempts)
